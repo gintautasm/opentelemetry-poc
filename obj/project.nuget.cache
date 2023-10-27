@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "eynDrBkKBLub60NrdePwfcYkxwZ73zmKCw2Mb3qEeD1mOA69GdpCudF3lx5HUQfoL1X98TxGSs1u+9+RFxhwSQ==",
+  "success": true,
+  "projectFilePath": "/home/ginmsk/dev/kafka-tutorial/opentelemetry-poc/opentelemetry-poc.csproj",
+  "expectedPackageFiles": [
+    "/home/ginmsk/.nuget/packages/microsoft.aspnetcore.openapi/7.0.12/microsoft.aspnetcore.openapi.7.0.12.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/microsoft.extensions.apidescription.server/6.0.5/microsoft.extensions.apidescription.server.6.0.5.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/microsoft.openapi/1.4.3/microsoft.openapi.1.4.3.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/swashbuckle.aspnetcore/6.5.0/swashbuckle.aspnetcore.6.5.0.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/swashbuckle.aspnetcore.swagger/6.5.0/swashbuckle.aspnetcore.swagger.6.5.0.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/swashbuckle.aspnetcore.swaggergen/6.5.0/swashbuckle.aspnetcore.swaggergen.6.5.0.nupkg.sha512",
+    "/home/ginmsk/.nuget/packages/swashbuckle.aspnetcore.swaggerui/6.5.0/swashbuckle.aspnetcore.swaggerui.6.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}

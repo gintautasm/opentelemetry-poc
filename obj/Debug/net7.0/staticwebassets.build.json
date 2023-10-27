@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "f7cIrDe8hhl42eC5NA3zdZzkrX0VS1guPfK1c2Whi/I=",
+  "Source": "opentelemetry-poc",
+  "BasePath": "_content/opentelemetry-poc",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
