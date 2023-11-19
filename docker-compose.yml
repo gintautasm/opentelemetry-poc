@@ -1,0 +1,72 @@
+---
+version: '3.4'
+services:
+
+  # # Collector
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib
+  #   command: ["--config=/etc/otel-collector-config.yaml"]
+  #   volumes:
+  #     #- ./otel-config.yml:/etc/otelcol/config.yaml
+  #     - ./otel-config.yml:/etc/otel-collector-config.yaml
+  #     - ./log:/log/otel
+  #   ports:
+  #     - "1888:1888"   # pprof extension
+  #     - "8888:8888"   # Prometheus metrics exposed by the collector
+  #     - "8889:8889"   # Prometheus exporter metrics
+  #     - "13133:13133" # health_check extension
+  #     - "4317:4317"   # OTLP gRPC receiver
+  #     - "4318:4318"   # OTLP http receiver
+  #     - "55679:55679" # zpages extension
+  #     - "9411:9411"   # zipkin
+  #   networks:
+  #     - main-backend
+
+  webapi:
+    build:
+      context: ./webapi
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:5000
+      - DB_CONNECTION="Server=mssql-db,1433;User=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;"
+      - OTEL_SERVICE_NAME='webapi'
+      - OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE=true
+      # - OTEL_TRACES_EXPORTER=otel
+      # - OTEL_METRICS_EXPORTER=otel
+      # - OTEL_LOGS_EXPORTER=otel
+      - OTEL_DOTNET_AUTO_TRACES_CONSOLE_EXPORTER_ENABLED=false
+      - OTEL_DOTNET_AUTO_METRICS_CONSOLE_EXPORTER_ENABLED=false
+      - OTEL_DOTNET_AUTO_LOGS_CONSOLE_EXPORTER_ENABLED=false
+      #- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318/
+    ports:
+      - 8000:5000
+    volumes:
+      - ./webapi/appsettings.json:/app/appsettings.json
+    depends_on:
+      - mssql-db
+      #- otel-collector
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - main-backend
+
+  mssql-db:
+    image: mcr.microsoft.com/mssql/server:2017-CU8-ubuntu
+    ports:
+      - 1433:1433
+    hostname: mssql-db
+    container_name: mssql-db
+    volumes:
+      - ./sql-bak:/sql-bak
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: yourStrong(!)Password
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - main-backend
+
+networks:
+  main-backend:
+    external: true

@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using Microsoft.Data.SqlClient;
+using System.Threading;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,13 +22,32 @@ var app = builder.Build();
 
 // app.UseHttpsRedirection();
 
+var connectionString = System.Environment.GetEnvironmentVariable("DB_CONNECTION");
+
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
 };
 
-app.MapGet("/weatherforecast", (ILogger<Program> logger, string? name) =>
+app.MapGet("/weatherforecast", WeatherForecast)
+.WithName("GetWeatherForecast")
+.WithOpenApi();
+
+app.Logger.LogInformation("starting the app ...");
+app.Run();
+
+async Task ExecuteSql(string sql)
 {
+    using var connection = new SqlConnection(connectionString);
+    await connection.OpenAsync();
+    using var command = new SqlCommand(sql, connection);
+    using var reader = await command.ExecuteReaderAsync();
+}
+
+async Task<WeatherForecast[]> WeatherForecast(ILogger<Program> logger, string? name)
+{
+    logger.LogInformation("executing SQL");
+    await ExecuteSql("SELECT 1");
     name ??= "My-name-is";
     var forecast =  Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
@@ -39,14 +60,11 @@ app.MapGet("/weatherforecast", (ILogger<Program> logger, string? name) =>
 
         logger.LogInformation("say hello to {name} ...", name);
     return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
-
-app.Logger.LogInformation("starting the app ...");
-app.Run();
+}
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+

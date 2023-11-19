@@ -1,0 +1,127 @@
+extensions:
+  health_check:
+  zpages:
+    endpoint: :55679
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+  zipkin:
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      paging:
+        metrics:
+          system.paging.utilization:
+            enabled: true
+      cpu:
+        metrics:
+          system.cpu.utilization:
+            enabled: true
+      disk:
+      filesystem:
+        metrics:
+          system.filesystem.utilization:
+            enabled: true
+      load:
+      memory:
+      network:
+      processes:
+  prometheus:
+    config:
+      scrape_configs:
+      - job_name: 'otelcol'
+        scrape_interval: 10s
+        static_configs:
+        - targets: ['0.0.0.0:8888']
+  docker_stats:
+    metrics:
+      container.network.io.usage.rx_packets:
+        enabled: true
+      container.network.io.usage.tx_packets:
+        enabled: true
+      container.cpu.usage.system:
+        enabled: true
+      container.memory.rss:
+        enabled: true
+      container.blockio.io_serviced_recursive:
+        enabled: true
+
+processors:
+  cumulativetodelta:
+  batch:
+    send_batch_max_size: 100
+    send_batch_size: 10
+    timeout: 10s
+
+exporters:
+  otlphttp:
+    endpoint: https://${env:DYNATRACE_ENV_ID}.live.dynatrace.com/api/v2/otlp
+    headers:
+      Authorization: Api-Token ${env:DYNATRACE_API_KEY}
+  debug:
+  file/traces:
+    path: /log/otel/traces.log
+  file/metrics:
+    path: /log/otel/metrics.log
+  file/logs:
+    path: /log/otel/logs.log
+  file/rotation_with_custom_settings:
+    path: /log/otel/rot_logs.log
+    rotation:
+      max_megabytes: 1
+      max_days: 3
+      max_backups: 0
+      localtime: true
+    format: json
+  datadog:
+    api:
+      site: datadoghq.eu
+      key: ${env:DATADOG_API_KEY}
+
+service:
+  telemetry:
+    logs:
+      level: "info"
+  pipelines:
+    traces:
+      receivers:
+        - otlp
+        - zipkin
+      processors:
+        - batch
+      exporters:
+        #- debug
+        #- file/traces
+        - otlphttp
+        - datadog
+    metrics:
+      receivers:
+        - otlp
+        - hostmetrics
+        - docker_stats
+      processors:
+        - batch
+        - cumulativetodelta
+      exporters:
+        #- debug
+        #- file/metrics
+        - otlphttp
+        - datadog
+    logs:
+      receivers:
+        - otlp
+        #- zipkin
+      processors:
+        - batch
+      exporters:
+        #- debug
+        #- file/logs
+        #- file/rotation_with_custom_settings
+        - datadog
+        - otlphttp
+  extensions:
+    - health_check
+    - zpages
