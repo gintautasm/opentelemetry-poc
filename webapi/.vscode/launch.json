@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net7.0/opentelemetry-poc.dll",
+            "program": "${workspaceFolder}/bin/Debug/net8.0/opentelemetry-poc.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -18,7 +18,12 @@
             //     "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             // },
             "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS":"http://+:5000",
+                "DB_CONNECTION":"Server=mssql-db,1433;User=sa;Password=yourStrong(!)Password;TrustServerCertificate=True;",
+                "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+                "KAFKA_API_KEY":"some-api-key",
+                "KAFKA_API_SECRET":"some-api-secret"
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
