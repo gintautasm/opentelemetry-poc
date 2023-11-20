@@ -1,26 +1,22 @@
 using Confluent.Kafka;
+using Serilog;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 
-public static class Telemetry
-{
-    public static string serviceName = System.Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "webapi";
-    public static readonly ActivitySource SearchHandlerActivitySource = new(serviceName);
-}
-public class KafkaConsumer : BackgroundService
+public class KafkaConsumer //: BackgroundService
 {
     ConsumerConfig consumerConfig = null;
     ProducerConfig producerConfig = null;
-    ILogger<KafkaConsumer> logger = null;
+    ILogger logger = null;
     Random random = new Random();
-    public KafkaConsumer(ILogger<KafkaConsumer> logger)
+    public KafkaConsumer(ILogger logger)
     {
         this.logger = logger;
         consumerConfig = new ConsumerConfig
         {
             BootstrapServers = System.Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP_SERVERS"),
-            GroupId = "search-handler-gr",
+            GroupId = "webapi-gr",
             AutoOffsetReset = AutoOffsetReset.Latest,
             AllowAutoCreateTopics = true,
             SecurityProtocol = SecurityProtocol.SaslSsl,
@@ -40,15 +36,16 @@ public class KafkaConsumer : BackgroundService
         };
     }
 
-    public async Task ConsumeMessages(string topic = "start-search")
+    public async Task ProcessSearchResults(string topic = "search-results")
     {
+
         using (var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build())
         {
             consumer.Subscribe(topic);
             var cts = new CancellationTokenSource();
             try
             {
-                await Task.Delay(5000);
+                //await Task.Delay(5000);
                 while (true)
                 {
                     var cr = consumer.Consume(cts.Token);
@@ -60,12 +57,10 @@ public class KafkaConsumer : BackgroundService
                         ActivityContext.TryParse(value, null, true, out var traceparentContext);
                         spanLink.Add(new ActivityLink(traceparentContext));
                     }
-                    using var TriggerSearch = Telemetry.SearchHandlerActivitySource.StartActivity(
-                        ActivityKind.Consumer, name: "TriggerSearch", links: spanLink);
-                    this.logger.LogInformation($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
+                    using var ProcessSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(
+                        ActivityKind.Consumer, name: "ProcessSearch", links: spanLink);
+                    this.logger.Information($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
                     await Task.Delay(50);
-
-                    await ProduceSearchResults();
                 }
             }
             catch (OperationCanceledException)
@@ -81,31 +76,31 @@ public class KafkaConsumer : BackgroundService
         }
     }
 
-    public async Task ProduceSearchResults(string topic = "search-results")
+    public async Task TriggerSearch(string topic = "start-search", string searchVal = "pandas")
     {
-        using var ProduceSearchResults = Telemetry.SearchHandlerActivitySource.StartActivity(ActivityKind.Producer, name: "ProduceSearchResults");
+        using var TriggerSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(ActivityKind.Producer, name: "TriggerSearch");
         using (var producer = new ProducerBuilder<string, string>(producerConfig).Build())
         {
             var headers = new Headers
             {
                 { "Header1", Encoding.UTF8.GetBytes(DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString()) },
-                { "traceparent", Encoding.UTF8.GetBytes(ProduceSearchResults?.Id ?? "") },
+                { "traceparent", Encoding.UTF8.GetBytes(TriggerSearch?.Id ?? "") },
             };
             // get data from db, produce into topic
             // check if traces works
             var partitionVal = random.NextInt64(0, 5);
-            this.logger.LogInformation($"producing search results Partition={partitionVal}");
+            this.logger.Information($"producing search results Partition={partitionVal}");
             await producer.ProduceAsync(topic, new Message<string, string>
             {
                 Headers = headers,
                 Key = $"Key {partitionVal}",
-                Value = JsonSerializer.Serialize(new { prop = "val" })
+                Value = JsonSerializer.Serialize(new { SearchTrigger = $"search-{searchVal}" })
             });
         }
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await ConsumeMessages();
+        await ProcessSearchResults();
     }
 }
