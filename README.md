@@ -1,5 +1,7 @@
 # opentelemetry-poc
 
+![PoC architecture](/resources/architecture.png "PoC architecture")
+
 ## Usage
 
 ### Prerequisites
