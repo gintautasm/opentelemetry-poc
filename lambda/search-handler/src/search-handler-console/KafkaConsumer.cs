@@ -60,6 +60,9 @@ public class KafkaConsumer //: BackgroundService
                     using var ProcessSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(
                         ActivityKind.Consumer, name: "ProcessSearch", links: spanLink);
                     this.logger.Information($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
+                    var searchResultsReceived = JsonSerializer.Deserialize<SearchResultMessage>(cr.Message.Value);
+                    search_handler.Telemetry.searchResultsReceived.Add(searchResultsReceived.Result.Count,
+                         new KeyValuePair<string, object?>("Query", searchResultsReceived.Query));
                     await Task.Delay(50);
                 }
             }
@@ -84,7 +87,7 @@ public class KafkaConsumer //: BackgroundService
             var headers = new Headers
             {
                 { "Header1", Encoding.UTF8.GetBytes(DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString()) },
-                { "traceparent", Encoding.UTF8.GetBytes(TriggerSearch?.Id ?? "") },
+                { "traceparent", Encoding.UTF8.GetBytes(TriggerSearch.Id.ToString()) },
             };
             // get data from db, produce into topic
             // check if traces works
@@ -102,5 +105,11 @@ public class KafkaConsumer //: BackgroundService
     public async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await ProcessSearchResults();
+    }
+
+    public class SearchResultMessage
+    {
+        public List<int> Result { get; set; }
+        public string Query { get; set; }
     }
 }

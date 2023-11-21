@@ -4,6 +4,8 @@ using OpenTelemetry.Trace;
 using System.Diagnostics;
 using Serilog;
 using Serilog.Sinks.OpenTelemetry;
+using System.Diagnostics.Metrics;
+using OpenTelemetry.Metrics;
 
 namespace search_handler;
 
@@ -16,6 +18,8 @@ public static class Telemetry
 {
     public static string serviceName = System.Environment.GetEnvironmentVariable("OTEL_SERVICE_NAME") ?? "search-handler";
     public static readonly ActivitySource SearchHandlerActivitySource = new(serviceName);
+    public static Meter SearchHandlerMeter = new(serviceName);
+    public static UpDownCounter<int> searchResultsReceived = SearchHandlerMeter.CreateUpDownCounter<int>("search_handler.search_result_received");
 }
 
 public class Function
@@ -28,9 +32,11 @@ public class Function
         // add other instrumentations
             .AddSource(Telemetry.serviceName)
             .ConfigureResource(resource =>
-                resource.AddService(
-                serviceName: Telemetry.serviceName,
-                serviceVersion: "1.0"))
+                {
+                    resource.AddService(
+                        serviceName: Telemetry.serviceName,
+                        serviceVersion: "1.0");
+                })
             .AddOtlpExporter(
                 options =>
                 {
@@ -46,6 +52,23 @@ public class Function
             )
         //.AddAWSLambdaConfigurations()
         .Build();
+
+        using MeterProvider meterProvider = Sdk.CreateMeterProviderBuilder()
+                .AddMeter(Telemetry.serviceName)
+                .AddOtlpExporter(
+                    options =>
+                {
+                    // most likely should be local host as
+                    options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;//OtlpProtocol.HttpProtobuf;
+                    options.HttpClientFactory = () =>
+                    {
+                        HttpClient client = new HttpClient();
+                        //client.DefaultRequestHeaders.Add("X-MyCustomHeader", "value");
+                        return client;
+                    };
+                }
+                )
+                .Build();
 
         using var log = new LoggerConfiguration()
                 .WriteTo
@@ -79,11 +102,23 @@ public class Function
 
             var key = Console.ReadKey(true);
             if (key.Key == ConsoleKey.Enter) break;
-            //Do other stuff
-            using var InitSearch = Telemetry.SearchHandlerActivitySource.StartActivity("InitSearch");
-            Log.Information("doing long running job {input}", key.Key);
-            await kafkaConsumer.TriggerSearch(searchVal: key.Key.ToString());
-            Log.Information("job done, awaiting command");
+
+            if (key.Key == ConsoleKey.Spacebar)
+            {
+                using var InitSearch = Telemetry.SearchHandlerActivitySource.StartActivity("DebugSearch");
+                Log.Information("doing long running job {input}", "debug");
+                await kafkaConsumer.TriggerSearch("search-results", searchVal: "debug");
+                Log.Information("job done, awaiting command");
+            }
+            else
+            {
+                //Do other stuff
+                using var InitSearch = Telemetry.SearchHandlerActivitySource.StartActivity("InitSearch");
+                Log.Information("doing long running job {input}", key.Key);
+
+                await kafkaConsumer.TriggerSearch(searchVal: key.Key.ToString());
+                Log.Information("job done, awaiting command");
+            }
         }
 
     }

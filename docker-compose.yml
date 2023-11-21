@@ -2,6 +2,30 @@
 version: '3.4'
 services:
 
+  otel-ubuntu:
+    build:
+      context: ./otelcol-ubuntu
+      dockerfile: Dockerfile
+    command: ["/usr/bin/otelcol-contrib","--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-config.yml:/etc/otel-collector-config.yaml
+      - ./log:/log/
+    environment:
+      - DYNATRACE_ENV_ID=envId
+      - DYNATRACE_API_KEY=dt0c01.L...
+      - DATADOG_API_KEY=781d...
+    ports:
+      - "1888:1888"   # pprof extension
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP http receiver
+      - "55679:55679" # zpages extension
+      - "9411:9411"   # zipkin
+    networks:
+      - main-backend
+
   # # Collector
   # otel-collector:
   #   image: otel/opentelemetry-collector-contrib
@@ -9,7 +33,11 @@ services:
   #   volumes:
   #     #- ./otel-config.yml:/etc/otelcol/config.yaml
   #     - ./otel-config.yml:/etc/otel-collector-config.yaml
-  #     - ./log:/log/otel
+  #     - ./log:/log/
+  #   environment:
+  #     - DYNATRACE_ENV_ID=envId
+  #     - DYNATRACE_API_KEY=dt0c01.L5FCR...
+  #     - DATADOG_API_KEY=781d..
   #   ports:
   #     - "1888:1888"   # pprof extension
   #     - "8888:8888"   # Prometheus metrics exposed by the collector
@@ -37,15 +65,19 @@ services:
       - OTEL_DOTNET_AUTO_TRACES_CONSOLE_EXPORTER_ENABLED=false
       - OTEL_DOTNET_AUTO_METRICS_CONSOLE_EXPORTER_ENABLED=false
       - OTEL_DOTNET_AUTO_LOGS_CONSOLE_EXPORTER_ENABLED=false
+      - OTEL_DOTNET_AUTO_TRACES_ADDITIONAL_SOURCES=custom.webapi.*
       #- OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318/
+      - KAFKA_BOOTSTRAP_SERVERS=....confluent.cloud:9092
+      - KAFKA_API_KEY=UF...
+      - KAFKA_API_SECRET=fpl....
     ports:
       - 8000:5000
     volumes:
       - ./webapi/appsettings.json:/app/appsettings.json
     depends_on:
       - mssql-db
-      #- otel-collector
+      - otel-ubuntu
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
