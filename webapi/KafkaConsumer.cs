@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Data.SqlClient;
 
 public class KafkaConsumer : BackgroundService
 {
@@ -10,6 +11,7 @@ public class KafkaConsumer : BackgroundService
     ProducerConfig producerConfig = null;
     ILogger<KafkaConsumer> logger = null;
     Random random = new Random();
+
     public KafkaConsumer(ILogger<KafkaConsumer> logger)
     {
         this.logger = logger;
@@ -89,6 +91,8 @@ public class KafkaConsumer : BackgroundService
             this.logger.LogError("ProduceSearchResults.Id is null");
         }
 
+        var connectionString = System.Environment.GetEnvironmentVariable("DB_CONNECTION");
+
         using (var producer = new ProducerBuilder<string, string>(producerConfig).Build())
         {
             var headers = new Headers
@@ -98,6 +102,9 @@ public class KafkaConsumer : BackgroundService
             };
             // get data from db, produce into topic
             // check if traces works
+
+            logger.LogInformation("executing SQL");
+            await ExecuteSql("SELECT 1", connectionString);
             var partitionVal = random.NextInt64(0, 5);
             var searchResults = Enumerable.Range(1, Convert.ToInt32(partitionVal)).Select(index => index);
             this.logger.LogInformation($"producing search results Partition={partitionVal}");
@@ -108,6 +115,14 @@ public class KafkaConsumer : BackgroundService
                 Value = JsonSerializer.Serialize(new { Result = searchResults.ToArray(), Query = searchQuery })
             });
         }
+    }
+
+    async Task ExecuteSql(string sql, string connectionString)
+    {
+        using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync();
+        using var command = new SqlCommand(sql, connection);
+        using var reader = await command.ExecuteReaderAsync();
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

@@ -61,6 +61,10 @@ exporters:
     endpoint: https://${env:DYNATRACE_ENV_ID}.live.dynatrace.com/api/v2/otlp
     headers:
       Authorization: Api-Token ${env:DYNATRACE_API_KEY}
+  otlp/honeycomb:
+    endpoint: api.honeycomb.io:443
+    headers:
+      "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
   debug:
   file/traces:
     path: /log/otel/traces.log
@@ -97,6 +101,7 @@ service:
         #- file/traces
         - otlphttp
         - datadog
+        - otlp/honeycomb
     metrics:
       receivers:
         - otlp
@@ -110,6 +115,7 @@ service:
         #- file/metrics
         - otlphttp
         - datadog
+        - otlp/honeycomb
     logs:
       receivers:
         - otlp
@@ -122,6 +128,7 @@ service:
         #- file/rotation_with_custom_settings
         - datadog
         - otlphttp
+        - otlp/honeycomb
   extensions:
     - health_check
     - zpages
