@@ -2,21 +2,34 @@
 
 ## Usage
 
-### Setup OpenTelemetry collector
+### Prerequisites
 
-* Install OTEL Collector
-* export API keys in bash before running
-```
-export DYNATRACE_ENV_ID=mrw77986
-export DYNATRACE_API_KEY=dt0c01....
-export DATADOG_API_KEY=781d2...
-```
-* Run `/usr/bin/otelcol-contrib --config=otel-config.yml`
+* Confluent cloud Kafka server trial version or any other [free trial here](https://login.confluent.io/)
+* Datadog account [free trial here](https://www.datadoghq.com/free-datadog-trial/)
+* Dynatrace account [free trial here](https://www.dynatrace.com/signup/)
 
-### Setup application
 
-* run `docker compose up` in root
+### Setup Dynatrace
+* Create API Keys for Dynatrace
+
+### Setup Datadog
+* Install Opentelemetry extension
+* Create API Keys for Datadog
 
 ### Setup Confluent Cloud
 
-* create topics: `start-search` and `search-results`
+* Create topics: `start-search` and `search-results`
+* Create API keys for accessing Kafka
+
+### Setup application
+
+* Populate api-keys in `docker-compose.yml` file
+* Ensure all build required containers are built
+* Run `docker compose up` in root
+* Set api-keys in `lambda/search-handler/src/search-handler-console/.vscode/launch.json`
+* Build and start `search-handler-console`
+  * Perform search: type any letter or number key in console, sends message to webapi container
+  * Perform debug search: hit spacebar, reroutes message to self via kafka
+  * Enter: to quit
+
+
