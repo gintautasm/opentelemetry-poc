@@ -60,6 +60,7 @@ public class KafkaConsumer : BackgroundService
                     }
                     using var TriggerSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(
                         ActivityKind.Consumer, name: "TriggerSearch", links: spanLink);
+                        TriggerSearch.SetParentId(traceparentContext.TraceId, traceparentContext.SpanId)
                     this.logger.LogInformation($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
                     await Task.Delay(50);
 
