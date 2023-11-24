@@ -51,16 +51,17 @@ public class KafkaConsumer : BackgroundService
                 {
                     var cr = consumer.Consume(cts.Token);
                     var traceparent = cr.Message.Headers.FirstOrDefault(h => h.Key == "traceparent");
+                    ActivityContext traceparentContext = default;
                     var spanLink = new List<ActivityLink>();
                     if (traceparent != null)
                     {
                         var value = System.Text.Encoding.UTF8.GetString(traceparent.GetValueBytes());
-                        ActivityContext.TryParse(value, null, true, out var traceparentContext);
+                        ActivityContext.TryParse(value, null, true, out traceparentContext);
                         spanLink.Add(new ActivityLink(traceparentContext));
                     }
                     using var TriggerSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(
-                        ActivityKind.Consumer, name: "TriggerSearch", links: spanLink);
-                        TriggerSearch.SetParentId(traceparentContext.TraceId, traceparentContext.SpanId)
+                        ActivityKind.Consumer, name: "TriggerSearch"/*, links: spanLink*/,
+                        parentContext: traceparentContext);
                     this.logger.LogInformation($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
                     await Task.Delay(50);
 
@@ -73,7 +74,7 @@ public class KafkaConsumer : BackgroundService
             }
             finally
             {
-                consumer.Close();
+                //consumer.Close();
             }
 
             consumer.Close();

@@ -51,18 +51,28 @@ public class KafkaConsumer //: BackgroundService
                     var cr = consumer.Consume(cts.Token);
                     var traceparent = cr.Message.Headers.FirstOrDefault(h => h.Key == "traceparent");
                     var spanLink = new List<ActivityLink>();
+                    ActivityContext traceparentContext = default;
                     if (traceparent != null)
                     {
                         var value = System.Text.Encoding.UTF8.GetString(traceparent.GetValueBytes());
-                        ActivityContext.TryParse(value, null, true, out var traceparentContext);
+                        ActivityContext.TryParse(value, null, true, out traceparentContext);
                         spanLink.Add(new ActivityLink(traceparentContext));
                     }
                     using var ProcessSearch = search_handler.Telemetry.SearchHandlerActivitySource.StartActivity(
-                        ActivityKind.Consumer, name: "ProcessSearch", links: spanLink);
+                        ActivityKind.Consumer, name: "ProcessSearch" /*, links: spanLink*/,
+                        parentContext: traceparentContext);
                     this.logger.Information($"Consumed event from topic {topic}: key = {cr.Message.Key,-10} value = {cr.Message.Value}");
-                    var searchResultsReceived = JsonSerializer.Deserialize<SearchResultMessage>(cr.Message.Value);
-                    search_handler.Telemetry.searchResultsReceived.Add(searchResultsReceived.Result.Count,
-                         new KeyValuePair<string, object?>("Query", searchResultsReceived.Query));
+                    try
+                    {
+                        var searchResultsReceived = JsonSerializer.Deserialize<SearchResultMessage>(cr.Message.Value);
+                        search_handler.Telemetry.searchResultsReceived.Add(searchResultsReceived.Result.Count,
+                             new KeyValuePair<string, object?>("Query", searchResultsReceived.Query));
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
+
                     await Task.Delay(50);
                 }
             }
@@ -70,10 +80,7 @@ public class KafkaConsumer //: BackgroundService
             {
                 // Ctrl-C was pressed.
             }
-            finally
-            {
-                consumer.Close();
-            }
+
 
             consumer.Close();
         }
@@ -86,13 +93,12 @@ public class KafkaConsumer //: BackgroundService
         {
             var headers = new Headers
             {
-                { "Header1", Encoding.UTF8.GetBytes(DateTimeOffset.Now.ToUnixTimeMilliseconds().ToString()) },
                 { "traceparent", Encoding.UTF8.GetBytes(TriggerSearch.Id.ToString()) },
             };
             // get data from db, produce into topic
             // check if traces works
             var partitionVal = random.NextInt64(0, 5);
-            this.logger.Information($"producing search results Partition={partitionVal}");
+            this.logger.Information($"Search initiated Partition={partitionVal}");
             await producer.ProduceAsync(topic, new Message<string, string>
             {
                 Headers = headers,
