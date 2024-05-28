@@ -97,11 +97,11 @@ service:
       processors:
         - batch
       exporters:
-        #- debug
+        - debug
         #- file/traces
-        - otlphttp
-        - datadog
-        - otlp/honeycomb
+        # - otlphttp
+        # - datadog
+        # - otlp/honeycomb
     metrics:
       receivers:
         - otlp
@@ -111,11 +111,11 @@ service:
         - batch
         - cumulativetodelta
       exporters:
-        #- debug
+        - debug
         #- file/metrics
-        - otlphttp
-        - datadog
-        - otlp/honeycomb
+        # - otlphttp
+        # - datadog
+        # - otlp/honeycomb
     logs:
       receivers:
         - otlp
@@ -123,12 +123,12 @@ service:
       processors:
         - batch
       exporters:
-        #- debug
+        - debug
         #- file/logs
         #- file/rotation_with_custom_settings
-        - datadog
-        - otlphttp
-        - otlp/honeycomb
+        # - datadog
+        # - otlphttp
+        # - otlp/honeycomb
   extensions:
     - health_check
     - zpages

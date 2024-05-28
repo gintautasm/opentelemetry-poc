@@ -12,7 +12,7 @@
       "program": "${workspaceFolder}/bin/Debug/net8.0/search-handler-console.dll",
       "args": [],
       "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
+      "console": "externalTerminal",
       "stopAtEntry": false,
       "env": {
         "KAFKA_BOOTSTRAP_SERVERS": "....confluent.cloud:9092",
