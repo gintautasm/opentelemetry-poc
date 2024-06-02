@@ -1,6 +1,7 @@
 FROM public.ecr.aws/lambda/dotnet:8
 
-WORKDIR /var/task
+#WORKDIR /var/task
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 # This COPY command copies the .NET Lambda project's build artifacts from the host machine into the image. 
 # The source of the COPY should match where the .NET Lambda project publishes its build artifacts. If the Lambda function is being built 
@@ -15,9 +16,20 @@ COPY "bin/Release/lambda-publish"  .
 
 COPY "otel-colletor-layer/collector-config/config.yaml"  ./collector-config/config.yaml
 
-WORKDIR /opt/extensions
+## https://docs.datadoghq.com/serverless/aws_lambda/installation/dotnet/?tab=containerimage
+COPY --from=public.ecr.aws/datadog/lambda-extension:latest /opt/. /opt/
 
-COPY "otel-colletor-layer/extensions/collector"  .
-RUN chmod +x /opt/extensions/collector
+#COPY --from=public.ecr.aws/aws-observability/aws-otel-collector:latest /awscollector /opt/extensions/.
+COPY "otel-colletor-layer/extensions/collector" /opt/extensions/.
+
+#COPY "otel-colletor-layer/extensions/aws-otel-collector.deb" .
+# RUN yum -i aws-otel-collector.deb
+
+#WORKDIR /opt/extensions
+
+# COPY "otel-colletor-layer/extensions/collector"  /opt/extensions/.
+# RUN chmod +x /opt/extensions/collector
 
 ENV OPENTELEMETRY_COLLECTOR_CONFIG_FILE=/var/task/collector-config/config.yaml
+
+CMD ["search-handler-lambda::search_handler_lambda.Function::FunctionHandler"]

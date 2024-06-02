@@ -6,24 +6,41 @@ receivers:
       http:
         endpoint: "localhost:4318"
 
+processors:
+  batch:
+
 exporters:
   logging:
     loglevel: debug
-  otlp:
-    endpoint: "http://host.docker.internal:4318/" 
-  #datadog:
+  # otlp/docker:
+  #   endpoint: "http://host.docker.internal:4318/"
+  otlp/ddagent:
+   # should be datadog agents grpc address
+   endpoint: "localhost:43177" 
+  otlp/honeycomb:
+    endpoint: "api.eu1.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "mJ8..."
+  # datadog:
+  #   api:
+  #     site: "datadoghq.eu"
+  #     key: "d601...."
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [otlp]
+      processors: [batch]
+      #exporters: [otlp/ddagent]
+      exporters: [otlp/honeycomb, otlp/ddagent]
     metrics:
       receivers: [otlp]
-      exporters: [otlp]
+      #exporters: [otlp/ddagent]
+      exporters: [otlp/honeycomb, otlp/ddagent]
     logs:
       receivers: [otlp]
-      exporters: [otlp]
+      #exporters: [otlp/ddagent]
+      exporters: [otlp/honeycomb, otlp/ddagent]
   # telemetry:
   #   metrics:
   #     address: localhost:8888
