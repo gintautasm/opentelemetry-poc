@@ -18,6 +18,7 @@ COPY "otel-colletor-layer/collector-config/config.yaml"  ./collector-config/conf
 
 ## https://docs.datadoghq.com/serverless/aws_lambda/installation/dotnet/?tab=containerimage
 COPY --from=public.ecr.aws/datadog/lambda-extension:latest /opt/. /opt/
+COPY "datadog/datadog.yml" ${LAMBDA_TASK_ROOT}/.
 
 #COPY --from=public.ecr.aws/aws-observability/aws-otel-collector:latest /awscollector /opt/extensions/.
 COPY "otel-colletor-layer/extensions/collector" /opt/extensions/.

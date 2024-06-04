@@ -37,15 +37,15 @@ public class Function
             .AddOtlpExporter(
                 options =>
                 {
-                    options.Endpoint = new Uri("https://api.honeycomb.io");
+                    options.Endpoint = new Uri("http://localhost:4318/v1/traces");
                     // most likely should be local host as
                     options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;//OtlpProtocol.HttpProtobuf;
-                    options.HttpClientFactory = () =>
-                    {
-                        HttpClient client = new HttpClient();
-                        client.DefaultRequestHeaders.Add("x-honeycomb-team", "mJ8....");
-                        return client;
-                    };
+                    // options.HttpClientFactory = () =>
+                    // {
+                    //     HttpClient client = new HttpClient();
+                    //     client.DefaultRequestHeaders.Add("x-honeycomb-team", "mJ8...");
+                    //     return client;
+                    // };
                 }
             )
         //.AddAWSLambdaConfigurations()
@@ -58,6 +58,8 @@ public class Function
                     // most likely should be local host as
                     options.Endpoint = System.Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4318/v1/logs";
                     options.Protocol = OtlpProtocol.HttpProtobuf;
+                    // options.Endpoint = System.Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
+                    // options.Protocol = OtlpProtocol.Grpc;
                     options.ResourceAttributes = new Dictionary<string, object>
                     {
                         ["service.name"] = Telemetry.serviceName,
