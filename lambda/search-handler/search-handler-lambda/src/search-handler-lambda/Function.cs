@@ -8,6 +8,8 @@ using Serilog;
 using Serilog.Sinks.OpenTelemetry;
 using System.Diagnostics.Metrics;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Instrumentation.AWSLambda;
+
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -16,16 +18,10 @@ namespace search_handler_lambda;
 
 public class Function
 {
-    
-    /// <summary>
-    /// A simple function that takes a string and returns both the upper and lower case version of the string.
-    /// </summary>
-    /// <param name="input">The event for the Lambda function handler to process.</param>
-    /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
-    /// <returns></returns>
-    public Casing FunctionHandler(string input, ILambdaContext context)
+    public static TracerProvider tracerProvider;
+    public Function()
     {
-        TracerProvider tracerProvider = Sdk.CreateTracerProviderBuilder()
+        tracerProvider = Sdk.CreateTracerProviderBuilder()
         // add other instrumentations
             .AddSource(Telemetry.serviceName)
             .ConfigureResource(resource =>
@@ -34,47 +30,37 @@ public class Function
                         serviceName: Telemetry.serviceName,
                         serviceVersion: "1.0");
                 })
-            .AddOtlpExporter(
-                options =>
-                {
-                    options.Endpoint = new Uri("http://localhost:4318/v1/traces");
-                    // most likely should be local host as
-                    options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;//OtlpProtocol.HttpProtobuf;
-                    // options.HttpClientFactory = () =>
-                    // {
-                    //     HttpClient client = new HttpClient();
-                    //     client.DefaultRequestHeaders.Add("x-honeycomb-team", "mJ8...");
-                    //     return client;
-                    // };
-                }
-            )
-        //.AddAWSLambdaConfigurations()
-        .Build();
+            .AddOtlpExporter()
+            .AddAWSLambdaConfigurations()
+            .Build();
 
-        using var log = new LoggerConfiguration()
+        Log.Logger = new LoggerConfiguration()
                 .WriteTo
                 .OpenTelemetry(options =>
                 {
-                    // most likely should be local host as
-                    options.Endpoint = System.Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4318/v1/logs";
-                    options.Protocol = OtlpProtocol.HttpProtobuf;
-                    // options.Endpoint = System.Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT") ?? "http://localhost:4317";
-                    // options.Protocol = OtlpProtocol.Grpc;
                     options.ResourceAttributes = new Dictionary<string, object>
                     {
                         ["service.name"] = Telemetry.serviceName,
                     };
                 })
-                //.WriteTo.Console()
+                .WriteTo.Console()
                 .CreateLogger();
-
-        Log.Logger = log;
-
-
-        Log.Information("received input "+ input);
-        var result = new Casing(input.ToLower(), input.ToUpper());
-        Log.Information("output "+ System.Text.Json.JsonSerializer.Serialize(result));
-        return result;
+    }
+    /// <summary>
+    /// A simple function that takes a string and returns both the upper and lower case version of the string.
+    /// </summary>
+    /// <param name="input">The event for the Lambda function handler to process.</param>
+    /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
+    /// <returns></returns>
+    public Casing FunctionHandler(string input, ILambdaContext context)
+    {
+        return AWSLambdaWrapper.Trace(tracerProvider, (input, context) => {
+            Log.Information("=========> received input "+ input);
+            //Telemetry.searchResultsReceived.Add(1);
+            var result = new Casing(input.ToLower(), input.ToUpper());
+            Log.Information("<========= output "+ System.Text.Json.JsonSerializer.Serialize(result));
+            return result;
+        }, input, context);
     }
 }
 

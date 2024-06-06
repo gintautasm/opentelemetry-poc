@@ -1,8 +1,8 @@
 receivers:
   otlp:
     protocols:
-      grpc:
-        endpoint: "localhost:4317"
+      # grpc:
+      #   endpoint: "localhost:4317"
       http:
         endpoint: "localhost:4318"
 
@@ -16,33 +16,52 @@ exporters:
   #   endpoint: "http://host.docker.internal:4318/"
   # datadog:
   #  # should be datadog agents grpc address
-  #  endpoint: "http://localhost:43188/" 
+  #  endpoint: "http://localhost:43177/" 
   otlp/honeycomb:
     endpoint: "api.honeycomb.io:443"
     headers:
-      "x-honeycomb-team": "mJ8..."
+      "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
+  otlphttp/honeycomb:
+    endpoint: "https://api.honeycomb.io"
+    headers:
+      "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
   otlp/ddagent:
     endpoint: "localhost:43177"
   datadog:
     api:
       site: "datadoghq.eu"
-      key: "d601...."
+      key: ${env:DATADOG_API_KEY}
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch]
-      #exporters: [otlp/ddagent]
-      exporters: [otlp/honeycomb, datadog, otlp/ddagent]
+      exporters: 
+        #- otlp/honeycomb
+        - datadog
+        - otlphttp/honeycomb
+#        - otlp/ddagent
     metrics:
       receivers: [otlp]
-      #exporters: [otlp/ddagent]
-      exporters: [otlp/honeycomb, datadog, otlp/ddagent]
+      processors:
+        - batch
+      exporters: 
+        #- otlp/honeycomb
+        - datadog
+        - otlphttp/honeycomb
+#        - otlp/ddagent
     logs:
       receivers: [otlp]
-      #exporters: [otlp/ddagent]
-      exporters: [otlp/honeycomb, datadog, otlp/ddagent]
-  # telemetry:
-  #   metrics:
-  #     address: localhost:8888
+      processors:
+        - batch
+      exporters: 
+        #- otlp/honeycomb
+        - datadog
+        - otlphttp/honeycomb
+#        - otlp/ddagent
+  telemetry:
+    logs:
+      level: debug
+    metrics:
+      address: localhost:8888

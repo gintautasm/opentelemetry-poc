@@ -51,26 +51,12 @@ resource "aws_lambda_function" "test_lambda" {
 
   package_type = "Image"
   publish = true
+  memory_size = 256
 
   #handler       = "search-handler-lambda::search_handler_lambda.Function::FunctionHandler"
 
   environment {
-    variables = {
-      foo = "bar"
-      DD_SITE = "datadoghq.eu"
-      DD_API_KEY = "d601..."
-      DD_TRACE_OTEL_ENABLED = true
-      DD_LOGS_ENABLED = true
-      DD_OTLP_CONFIG_LOGS_ENABLED = true
-      DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT = "0.0.0.0:43177"
-      DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT = "0.0.0.0:43188"
-      DD_SERVERLESS_LOGS_ENABLED = true
-      DD_CAPTURE_LAMBDA_PAYLOAD = true
-      DD_TRACE_ENABLED = true
-      DD_LOG_LEVEL = "debug"
-      DD_DOGSTATSD_NON_LOCAL_TRAFFIC = true
-      DD_APM_ENABLED = true
-    }
+    variables = var.lambda_env_vars
   }
 }
 
@@ -87,5 +73,11 @@ resource "aws_ecr_repository" "opentelemetry_poc" {
   #  scan_on_push = true
   #}
 }
+
+#endregion
+
+#region variables
+
+variable "lambda_env_vars" { }
 
 #endregion
