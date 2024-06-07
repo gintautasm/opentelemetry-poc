@@ -23,8 +23,12 @@ services:
       - "4318:4318"   # OTLP http receiver
       - "55679:55679" # zpages extension
       - "9411:9411"   # zipkin
+      - "8088:8088"   #webhookreceiver
     networks:
       - main-backend
+
+# request to generate some logs 
+# curl -iv -X POST http://localhost:8088/eventsource/receiver -d '{"some":"log"}'
 
   # # Collector
   # otel-collector:
@@ -94,6 +98,28 @@ services:
     environment:
       ACCEPT_EULA: Y
       MSSQL_SA_PASSWORD: yourStrong(!)Password
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - main-backend
+
+  datadog:
+    image: public.ecr.aws/datadog/agent:7
+    pid: host
+    environment:
+     - DD_API_KEY=d601...
+     - DD_SITE=datadoghq.eu
+     - DD_LOGS_ENABLED=true
+     - DD_OTLP_CONFIG_LOGS_ENABLED=true
+     - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_GRPC_ENDPOINT=0.0.0.0:43177
+     - DD_OTLP_CONFIG_RECEIVER_PROTOCOLS_HTTP_ENDPOINT=0.0.0.0:43188
+    ports:
+      - 43177:43177 # datadog otlp gRPC port
+      - 43188:43188 # datadog otlp http port
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+     - /proc/:/host/proc/:ro
+     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

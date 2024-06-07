@@ -9,6 +9,12 @@ receivers:
       grpc:
       http:
   zipkin:
+  webhookevent:
+        endpoint: 0.0.0.0:8088
+        read_timeout: "500ms"
+        write_timeout: "500ms"
+        path: "/eventsource/receiver"
+        health_path: "/eventreceiver/healthcheck"
   hostmetrics:
     collection_interval: 10s
     scrapers:
@@ -66,6 +72,7 @@ exporters:
     headers:
       "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
   debug:
+    verbosity: detailed
   file/traces:
     path: /log/otel/traces.log
   file/metrics:
@@ -84,6 +91,10 @@ exporters:
     api:
       site: datadoghq.eu
       key: ${env:DATADOG_API_KEY}
+  otlp/ddagent:
+    endpoint: http://datadog:43177
+  otlphttp/ddagent:
+    endpoint: http://datadog:43188
 
 service:
   telemetry:
@@ -119,6 +130,7 @@ service:
     logs:
       receivers:
         - otlp
+        - webhookevent
         #- zipkin
       processors:
         - batch
