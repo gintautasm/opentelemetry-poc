@@ -54,13 +54,15 @@ public class Function
     /// <returns></returns>
     public Casing FunctionHandler(string input, ILambdaContext context)
     {
+        using var ProcessSearch = Telemetry.SearchHandlerActivitySource.StartActivity(
+                        ActivityKind.Consumer, name: "FunctionHandler");
         return AWSLambdaWrapper.Trace(tracerProvider, (input, context) => {
             Log.Information("=========> received input "+ input);
             //Telemetry.searchResultsReceived.Add(1);
             var result = new Casing(input.ToLower(), input.ToUpper());
             Log.Information("<========= output "+ System.Text.Json.JsonSerializer.Serialize(result));
             return result;
-        }, input, context);
+        }, input, context, ProcessSearch.Context);
     }
 }
 
