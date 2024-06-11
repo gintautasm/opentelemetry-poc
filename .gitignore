@@ -4,3 +4,4 @@ log/
 .terraform/
 .terraform.*
 terraform.*
+exports.sh

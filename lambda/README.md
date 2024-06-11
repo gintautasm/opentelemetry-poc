@@ -27,11 +27,15 @@ dotnet publish "$(pwd)/lambda" \
 
 ### Build Docker container
 
-
 ```
 cd ~/dev/opentelemetry-poc/lambda
 
-docker build  -f "$(pwd)/Dockerfile" -t search-handler-lambda:latest .
+docker build . -f "$(pwd)/Dockerfile" \
+     --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+     --build-arg AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+     -t search-handler-lambda:latest \
+     --no-cache \
+     --progress plain
 ```
 
 ### Run Docker container locally and call the function
@@ -49,12 +53,18 @@ docker run --rm -it -p 9000:8080 \
 curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '"hello world"'
 ```
 
+### Docker build cleanup
+
+```
+docker image prune
+```
+
 ### Push docker container to AWS ECR
 
 Push will only work if ECR repository exists.
 ```
 export AWS_PROFILE=my-aws-profile
-export AWS_ACCOUNT=506.......
+export AWS_ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
 export AWS_REGION=eu-west-1
 
 aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
