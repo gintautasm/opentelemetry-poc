@@ -2,4 +2,5 @@ bin/
 obj/
 log/
 .terraform/
-.terraform*
+.terraform.*
+terraform.*
