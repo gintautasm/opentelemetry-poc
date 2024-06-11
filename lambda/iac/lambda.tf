@@ -38,13 +38,13 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "iam_for_lambda" {
-  name               = "iam_for_lambda"
+  name               = "opentelemetry_poc_iam_for_lambda"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 resource "aws_lambda_function" "test_lambda" {
   
-  function_name = "lambda_function_name"
+  function_name = "opentelemetry_poc_lambda_function"
   role          = aws_iam_role.iam_for_lambda.arn
   image_uri    = "${aws_ecr_repository.opentelemetry_poc.repository_url}:latest"
   timeout = 60
