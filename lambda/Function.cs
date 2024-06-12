@@ -30,7 +30,13 @@ public class Function
                         serviceName: Telemetry.serviceName,
                         serviceVersion: "1.0");
                 })
-            .AddOtlpExporter()
+            .AddOtlpExporter(
+                options =>
+                {
+                    options.Endpoint = new Uri("http://localhost:4318");
+                    options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
+                }
+            )
             .AddAWSLambdaConfigurations()
             .Build();
 
@@ -38,6 +44,8 @@ public class Function
                 .WriteTo
                 .OpenTelemetry(options =>
                 {
+                    options.Endpoint = "http://localhost:4318/v1/logs";
+                    options.Protocol = OtlpProtocol.HttpProtobuf;
                     options.ResourceAttributes = new Dictionary<string, object>
                     {
                         ["service.name"] = Telemetry.serviceName,
@@ -54,15 +62,23 @@ public class Function
     /// <returns></returns>
     public Casing FunctionHandler(string input, ILambdaContext context)
     {
-        using var ProcessSearch = Telemetry.SearchHandlerActivitySource.StartActivity(
+        try
+        {
+            using var ProcessSearch = Telemetry.SearchHandlerActivitySource.StartActivity(
                         ActivityKind.Consumer, name: "FunctionHandler");
-        return AWSLambdaWrapper.Trace(tracerProvider, (input, context) => {
-            Log.Information("=========> received input "+ input);
-            //Telemetry.searchResultsReceived.Add(1);
-            var result = new Casing(input.ToLower(), input.ToUpper());
-            Log.Information("<========= output "+ System.Text.Json.JsonSerializer.Serialize(result));
-            return result;
-        }, input, context, ProcessSearch.Context);
+                return AWSLambdaWrapper.Trace(tracerProvider, (input, context) => {
+                    Log.Information("=========> received input "+ input);
+                    //Telemetry.searchResultsReceived.Add(1);
+                    var result = new Casing(input.ToLower(), input.ToUpper());
+                    Log.Information("<========= output "+ System.Text.Json.JsonSerializer.Serialize(result));
+                    return result;
+                }, input, context, ProcessSearch.Context);
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+        
     }
 }
 

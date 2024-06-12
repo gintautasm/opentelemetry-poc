@@ -2,9 +2,9 @@ receivers:
   otlp:
     protocols:
       # grpc:
-      #   endpoint: "localhost:4317"
+      #   endpoint: 
       http:
-        endpoint: "localhost:4318"
+        endpoint: 
 
 # processors:
 #   batch:
@@ -45,7 +45,8 @@ service:
         #- otlp/honeycomb
         #- datadog
         - otlphttp/honeycomb
-        - otlphttp/ddagent
+        # - otlphttp/ddagent
+        # - logging
     metrics:
       receivers: 
         - otlp
@@ -55,7 +56,8 @@ service:
         #- otlp/honeycomb
         #- datadog
         - otlphttp/honeycomb
-        - otlphttp/ddagent
+        # - otlphttp/ddagent
+        # - logging
         # - debug
     logs:
       receivers: 
@@ -66,7 +68,8 @@ service:
         #- otlp/honeycomb
         #- datadog
         - otlphttp/honeycomb
-        - otlphttp/ddagent
+        # - otlphttp/ddagent
+        # - logging 
   telemetry:
     logs:
       level: debug

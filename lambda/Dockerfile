@@ -16,8 +16,9 @@ RUN apk add aws-cli curl unzip
 
 RUN mkdir -p /opt
 
-ENV LAYER_VER=0-98-0:5
-RUN curl $(aws lambda get-layer-version-by-arn --arn arn:aws:lambda:$AWS_DEFAULT_REGION:901920570463:layer:aws-otel-collector-amd64-ver-$LAYER_VER --query 'Content.Location' --output text) --output layer.zip
+ENV LAYER_VER=arn:aws:lambda:$AWS_DEFAULT_REGION:184161586896:layer:opentelemetry-collector-amd64-0_8_0:1
+
+RUN curl $(aws lambda get-layer-version-by-arn --arn $LAYER_VER --query 'Content.Location' --output text) --output layer.zip
 RUN unzip layer.zip -d /opt
 RUN rm layer.zip
 
@@ -43,7 +44,7 @@ WORKDIR /var/task
 COPY --from=publish /app/publish .
 
 # add datadog extension layer
-COPY --from=datadog /opt/. /opt/
+#COPY --from=datadog /opt/. /opt/
 # COPY "datadog/datadog.yml" /var/task/datadog.yml
 
 # add datadog extension layer
