@@ -33,7 +33,7 @@ public class Function
             .AddOtlpExporter(
                 options =>
                 {
-                    options.Endpoint = new Uri("http://localhost:4318");
+                    options.Endpoint = new Uri("http://localhost:4318/v1/traces");
                     options.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
                 }
             )
