@@ -34,6 +34,10 @@ exporters:
   #     site: "datadoghq.eu"
   #     key: ${env:DD_API_KEY}
 
+# connectors:
+#   # The Datadog connector is necessary for APM Trace metrics.
+#   datadog/connector:
+
 service:
   pipelines:
     traces:
@@ -43,10 +47,18 @@ service:
         # - batch
       exporters: 
         #- otlp/honeycomb
-        #- datadog
+        # - datadog
         - otlphttp/honeycomb
+        #- datadog/connector #https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/datadogconnector/README.md
         # - otlphttp/ddagent
         # - logging
+    # traces/datadog:
+    #   receivers: 
+    #     - datadog/connector
+    #   processors:
+    #     # - batch
+    #   exporters:
+    #     - datadog
     metrics:
       receivers: 
         - otlp
@@ -54,7 +66,7 @@ service:
         # - batch
       exporters: 
         #- otlp/honeycomb
-        #- datadog
+        # - datadog
         - otlphttp/honeycomb
         # - otlphttp/ddagent
         # - logging
@@ -66,7 +78,7 @@ service:
         # - batch
       exporters: 
         #- otlp/honeycomb
-        #- datadog
+        # - datadog
         - otlphttp/honeycomb
         # - otlphttp/ddagent
         # - logging 

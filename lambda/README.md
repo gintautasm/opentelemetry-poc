@@ -83,3 +83,15 @@ cd ~/dev/opentelemetry-poc/lambda/iac
 terraform apply -auto-approve
 terraform destroy -auto-approve
 ```
+
+## Invoke deployed Lambda
+
+```
+echo -n \"Time is `date +%F_%H:%M:%S`\" > payload.json \
+&& aws lambda invoke \
+    --function-name opentelemetry_poc_lambda_function \
+    --payload file://payload.json \
+    --cli-binary-format raw-in-base64-out \
+    output.txt \
+    && cat output.txt
+```

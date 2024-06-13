@@ -5,3 +5,5 @@ log/
 .terraform.*
 terraform.*
 exports.sh
+payload.json
+output.txt
