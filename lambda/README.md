@@ -72,6 +72,10 @@ aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --
 docker tag search-handler-lambda:latest $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/opentelemetry-poc:latest
 
 docker push $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/opentelemetry-poc:latest
+
+aws lambda update-function-code \
+  --function-name opentelemetry_poc_lambda_function \
+  --image-uri $AWS_ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com/opentelemetry-poc:latest
 ```
 
 ## Deploying to AWS
