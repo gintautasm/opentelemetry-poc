@@ -1,0 +1,10 @@
+logs_enabled: true
+otlp_config:
+  receiver:
+    protocols:
+      grpc:
+        endpoint: localhost:43177
+      http:
+        endpoint: localhost:43188
+  logs:
+    enabled: true

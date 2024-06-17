@@ -1,2 +1,9 @@
 bin/
 obj/
+log/
+.terraform/
+.terraform.*
+terraform.*
+exports.sh
+payload.json
+output.txt

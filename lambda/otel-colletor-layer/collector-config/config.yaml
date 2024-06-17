@@ -1,0 +1,96 @@
+receivers:
+  otlp:
+    protocols:
+      # grpc:
+      #   endpoint: 
+      http:
+        endpoint: 
+
+# processors:
+#   batch:
+
+exporters:
+  logging:
+    loglevel: debug
+  # debug:
+  #   verbosity: detailed
+  # otlp/docker:
+  #   endpoint: "http://host.docker.internal:4318/"
+  # datadog:
+  #  # should be datadog agents grpc address
+  #  endpoint: "http://localhost:43177/" 
+  otlp/honeycomb:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
+  otlphttp/honeycomb:
+    endpoint: "https://api.honeycomb.io"
+    headers:
+      "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
+  otlphttp/ddagent:
+    endpoint: "http://localhost:43188"
+  otlphttp/dynatrace:
+    endpoint: https://${env:DYNATRACE_ENV_ID}.live.dynatrace.com/api/v2/otlp
+    headers:
+      Authorization: Api-Token ${env:DYNATRACE_API_KEY}
+  # datadog:
+  #   api:
+  #     site: "datadoghq.eu"
+  #     key: ${env:DD_API_KEY}
+
+# connectors:
+#   # The Datadog connector is necessary for APM Trace metrics.
+#   datadog/connector:
+
+service:
+  pipelines:
+    traces:
+      receivers: 
+        - otlp
+      processors:
+        # - batch
+      exporters: 
+        #- otlp/honeycomb
+        # - datadog
+        - otlphttp/dynatrace
+        - otlphttp/honeycomb
+        #- datadog/connector #https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/datadogconnector/README.md
+        # - otlphttp/ddagent
+        # - logging
+    # traces/datadog:
+    #   receivers: 
+    #     - datadog/connector
+    #   processors:
+    #     # - batch
+    #   exporters:
+    #     - datadog
+    metrics:
+      receivers: 
+        - otlp
+      processors:
+        # - batch
+      exporters: 
+        #- otlp/honeycomb
+        # - datadog
+        - otlphttp/dynatrace
+        - otlphttp/honeycomb
+        # - otlphttp/ddagent
+        # - logging
+        # - debug
+    logs:
+      receivers: 
+        - otlp
+      processors:
+        # - batch
+      exporters: 
+        #- otlp/honeycomb
+        # - datadog
+        - otlphttp/dynatrace
+        - otlphttp/honeycomb
+        # - otlphttp/ddagent
+        # - logging 
+  telemetry:
+    logs:
+      level: debug
+    metrics:
+      address: localhost:8888
