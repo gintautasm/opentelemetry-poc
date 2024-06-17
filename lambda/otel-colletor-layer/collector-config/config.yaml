@@ -29,6 +29,10 @@ exporters:
       "x-honeycomb-team": ${env:HONEYCOMB_API_KEY}
   otlphttp/ddagent:
     endpoint: "http://localhost:43188"
+  otlphttp/dynatrace:
+    endpoint: https://${env:DYNATRACE_ENV_ID}.live.dynatrace.com/api/v2/otlp
+    headers:
+      Authorization: Api-Token ${env:DYNATRACE_API_KEY}
   # datadog:
   #   api:
   #     site: "datadoghq.eu"
@@ -48,6 +52,7 @@ service:
       exporters: 
         #- otlp/honeycomb
         # - datadog
+        - otlphttp/dynatrace
         - otlphttp/honeycomb
         #- datadog/connector #https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/connector/datadogconnector/README.md
         # - otlphttp/ddagent
@@ -67,6 +72,7 @@ service:
       exporters: 
         #- otlp/honeycomb
         # - datadog
+        - otlphttp/dynatrace
         - otlphttp/honeycomb
         # - otlphttp/ddagent
         # - logging
@@ -79,6 +85,7 @@ service:
       exporters: 
         #- otlp/honeycomb
         # - datadog
+        - otlphttp/dynatrace
         - otlphttp/honeycomb
         # - otlphttp/ddagent
         # - logging 

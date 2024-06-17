@@ -108,24 +108,24 @@ service:
       processors:
         - batch
       exporters:
-        - debug
+        #- debug
         #- file/traces
-        # - otlphttp
-        # - datadog
+        - otlphttp
+        - datadog
         # - otlp/honeycomb
     metrics:
       receivers:
         - otlp
-        - hostmetrics
+        #- hostmetrics
         #- docker_stats
       processors:
         - batch
         - cumulativetodelta
       exporters:
-        - debug
+        #- debug
         #- file/metrics
-        # - otlphttp
-        # - datadog
+        - otlphttp
+        - datadog
         # - otlp/honeycomb
     logs:
       receivers:
@@ -135,11 +135,11 @@ service:
       processors:
         - batch
       exporters:
-        - debug
+        #- debug
         #- file/logs
         #- file/rotation_with_custom_settings
-        # - datadog
-        # - otlphttp
+        - datadog
+        - otlphttp
         # - otlp/honeycomb
   extensions:
     - health_check
