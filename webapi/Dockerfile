@@ -31,6 +31,10 @@ RUN chmod +x '/app/run.sh'
 # final stage/image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 
+# This is required for SQL Client
+RUN apk add --no-cache icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
 ENV OTEL_DOTNET_AUTO_HOME="/otel-dotnet-auto"
 
 COPY --from=build /otel-dotnet-auto /otel-dotnet-auto
